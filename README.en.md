@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	handler := slogltsv.NewLTSVHandler(os.Stdout, slogltsv.Option{
+	handler := slogltsv.NewLTSVHandler(os.Stdout, &slogltsv.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
 	logger := slog.New(handler).With(
@@ -47,11 +47,15 @@ The actual timestamps and time zone depend on the runtime environment.
 
 ## Configuration
 
-`NewLTSVHandler` takes an `io.Writer` as its output destination. You can optionally set the minimum log level with `Option`. The default level is `slog.LevelInfo`.
+`NewLTSVHandler` takes an `io.Writer` and a `*HandlerOptions`. Unspecified values use their defaults, including when `nil` is passed. The default minimum level is `slog.LevelInfo`; the default labels are `time`, `level`, and `msg`; the default time format is `2006-01-02T15:04:05.000000000Z0700`. `TimeFormat` uses the same layout syntax as Go's [`time.Time.Format`](https://pkg.go.dev/time#Time.Format).
 
 ```go
-handler := slogltsv.NewLTSVHandler(os.Stdout, slogltsv.Option{
-	Level: slog.LevelWarn,
+handler := slogltsv.NewLTSVHandler(os.Stdout, &slogltsv.HandlerOptions{
+	Level:      slog.LevelWarn,
+	TimeLabel:  "timestamp",
+	TimeFormat: "2006-01-02T15:04:05Z07:00",
+	LevelLabel: "severity",
+	MsgLabel:   "message",
 })
 ```
 

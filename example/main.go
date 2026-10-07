@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	handler := slogltsv.NewLTSVHandler(os.Stdout, slogltsv.Option{
+	handler := slogltsv.NewLTSVHandler(os.Stdout, &slogltsv.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
 	logger := slog.New(handler).With(

@@ -8,9 +8,13 @@ import (
 	"sync"
 )
 
-// Option configures an LTSVHandler.
-type Option struct {
-	Level slog.Leveler
+// HandlerOptions configures an LTSVHandler.
+type HandlerOptions struct {
+	Level      slog.Leveler
+	TimeLabel  string
+	TimeFormat string
+	LevelLabel string
+	MsgLabel   string
 }
 
 type handlerState struct {
@@ -23,7 +27,7 @@ type boundAttr struct {
 }
 
 type LTSVHandler struct {
-	option *Option
+	option *HandlerOptions
 	state  *handlerState
 	writer io.Writer
 	attrs  []boundAttr
@@ -33,13 +37,25 @@ type LTSVHandler struct {
 var _ slog.Handler = (*LTSVHandler)(nil)
 
 // NewLTSVHandler creates a handler that writes one LTSV record per line.
-func NewLTSVHandler(w io.Writer, options ...Option) *LTSVHandler {
-	option := Option{Level: slog.LevelInfo}
-	if len(options) > 0 {
-		option = options[0]
-		if option.Level == nil {
-			option.Level = slog.LevelInfo
-		}
+func NewLTSVHandler(w io.Writer, opts *HandlerOptions) *LTSVHandler {
+	option := HandlerOptions{}
+	if opts != nil {
+		option = *opts
+	}
+	if option.Level == nil {
+		option.Level = slog.LevelInfo
+	}
+	if option.TimeLabel == "" {
+		option.TimeLabel = "time"
+	}
+	if option.TimeFormat == "" {
+		option.TimeFormat = "2006-01-02T15:04:05.000000000Z0700"
+	}
+	if option.LevelLabel == "" {
+		option.LevelLabel = "level"
+	}
+	if option.MsgLabel == "" {
+		option.MsgLabel = "msg"
 	}
 	return &LTSVHandler{
 		option: &option,
@@ -55,9 +71,9 @@ func (h *LTSVHandler) Enabled(_ context.Context, level slog.Level) bool {
 func (h *LTSVHandler) Handle(_ context.Context, record slog.Record) error {
 	fields := make([]string, 0, 3+len(h.attrs)+record.NumAttrs())
 	if !record.Time.IsZero() {
-		fields = append(fields, "time:"+escape(record.Time.Format("2006-01-02T15:04:05.000000000Z0700")))
+		fields = append(fields, escapeKey(h.option.TimeLabel)+":"+escape(record.Time.Format(h.option.TimeFormat)))
 	}
-	fields = append(fields, "level:"+escape(record.Level.String()), "msg:"+escape(record.Message))
+	fields = append(fields, escapeKey(h.option.LevelLabel)+":"+escape(record.Level.String()), escapeKey(h.option.MsgLabel)+":"+escape(record.Message))
 
 	for _, attr := range h.attrs {
 		appendAttr(&fields, attr.groups, attr.attr)
