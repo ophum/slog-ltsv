@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	handler := slogltsv.NewLTSVHandler(os.Stdout, slogltsv.Option{
+	handler := slogltsv.NewLTSVHandler(os.Stdout, &slogltsv.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
 	logger := slog.New(handler).With(
@@ -47,11 +47,15 @@ time:2026-10-07T12:34:56.123456790Z	level:INFO	msg:request received	service:chec
 
 ## 設定
 
-`NewLTSVHandler` は出力先の `io.Writer` を受け取ります。省略可能な `Option` で最低ログレベルを指定できます。既定値は `slog.LevelInfo` です。
+`NewLTSVHandler` は出力先の `io.Writer` と `*HandlerOptions` を受け取ります。`nil` を渡した場合も含め、未指定の値には既定値が使われます。最低ログレベルの既定値は `slog.LevelInfo`、ラベルの既定値は `time`、`level`、`msg`、時刻フォーマットの既定値は `2006-01-02T15:04:05.000000000Z0700` です。時刻フォーマットにはGoの [`time.Time.Format`](https://pkg.go.dev/time#Time.Format) と同じレイアウトを指定できます。
 
 ```go
-handler := slogltsv.NewLTSVHandler(os.Stdout, slogltsv.Option{
-	Level: slog.LevelWarn,
+handler := slogltsv.NewLTSVHandler(os.Stdout, &slogltsv.HandlerOptions{
+	Level:      slog.LevelWarn,
+	TimeLabel:  "timestamp",
+	TimeFormat: "2006-01-02T15:04:05Z07:00",
+	LevelLabel: "severity",
+	MsgLabel:   "message",
 })
 ```
 
